@@ -51,3 +51,28 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+
+
+class ClassBooking(BaseModel):
+    full_name: str
+    email: EmailStr
+    class_type: str
+    date: str
+    time: str
+
+
+class ClassJoin(BaseModel):
+    full_name: str
+    email: EmailStr
+    class_code: str
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class LoginResponse(BaseModel):
+    ok: bool
+    token: Optional[str] = None
+    detail: Optional[str] = None

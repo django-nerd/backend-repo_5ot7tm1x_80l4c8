@@ -1,11 +1,21 @@
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List
+from typing import Optional
 
 from database import db, create_document, get_documents
-from schemas import Booking, Admission, TrainerApplication, Review, ChatRequest, ChatResponse
+from schemas import (
+    Booking,
+    Admission,
+    TrainerApplication,
+    Review,
+    ChatRequest,
+    ChatResponse,
+    ClassBooking,
+    ClassJoin,
+    LoginRequest,
+    LoginResponse,
+)
 
 app = FastAPI(title="Vector Strength Gym API")
 
@@ -103,6 +113,25 @@ def list_reviews(limit: int = 20):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Classes: book and join
+@app.post("/api/book-class")
+def api_book_class(payload: ClassBooking):
+    try:
+        doc_id = create_document("classbooking", payload)
+        return {"ok": True, "id": doc_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/join-class")
+def api_join_class(payload: ClassJoin):
+    try:
+        doc_id = create_document("classjoin", payload)
+        return {"ok": True, "id": doc_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Very simple rule-based chatbot (no external dependencies)
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
@@ -122,13 +151,22 @@ def chat(req: ChatRequest):
         )
     elif any(k in text for k in ["class", "schedule", "book"]):
         reply = (
-            "Check the Booking section to reserve classes like HIIT, Strength, or Yoga."
+            "Check the Booking or Classes section to reserve sessions like HIIT, Strength, or Yoga."
         )
     else:
         reply = (
             "Welcome to Vector Strength! Ask me about memberships, hours, classes, or trainers."
         )
     return ChatResponse(reply=reply)
+
+
+# Simple demo login (email+password); on success returns a fake token.
+@app.post("/api/login", response_model=LoginResponse)
+def login(payload: LoginRequest):
+    # For demo purposes, accept any non-empty password of length >= 6
+    if payload.password and len(payload.password) >= 6:
+        return LoginResponse(ok=True, token="vs_demo_token")
+    return LoginResponse(ok=False, detail="Invalid email or password")
 
 
 if __name__ == "__main__":
